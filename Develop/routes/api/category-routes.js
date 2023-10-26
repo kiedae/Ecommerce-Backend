@@ -6,7 +6,7 @@ const { Category, Product } = require('../../models');
 router.get('/', async (req, res) => {
   // find all categories
   try {
-    const categories = await Category.findall( {
+    const categories = await Category.findAll( {
       include: [{ model: Product}]
     });
     res.status(200).json(categories);
@@ -19,18 +19,19 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   // find one category by its `id` value
  try {
-  const category = await Category.findByPk(req.params.id, { include: [{model: Product}]} )
+  const category = await Category.findByPk(req.params.id, { include: [{model: Product}]});
 
   res.status(200).json(category);
  } catch (err) {
   res.status(500).json({ message: 'Category not Found'});
+  res.status(404).json({message: 'Product Not Found'});
  }
   // be sure to include its associated Products
 });
 
 router.post('/', (req, res) => {
   // create a new category
-  Category.create(req, body)
+  Category.create(req.body).then(res.status(200).json({message: 'Category Created'}));
 });
 
 router.put('/:id', (req, res) => {
@@ -38,7 +39,7 @@ router.put('/:id', (req, res) => {
   Category.update(req.body, 
   {
     where: {
-    category_name: req.params.id,
+    id: req.params.id,
     },
   }).then(categoryData => {
     res.json(categoryData);
@@ -46,15 +47,15 @@ router.put('/:id', (req, res) => {
 
 });
 
-router.delete('/:id', (req, res) => {
+router.delete('/:id', async (req, res) => {
   // delete a category by its `id` value
-  Category.destroy({
-    where: {
-      category_id: req.params.id,
-    },
-  }).then((deletedCategory) => {
-    res.json(deletedCategory);
-  }).catch((err) => res.json(err));
+
+  try {
+    const deletedCategory = await Category.destroy(req.body, { where: { id: req.params.id}});
+    res.status(200).json(deletedCategory);
+  } catch (err) {
+    res.status(500).json({message: 'category not found'});
+  }
 });
 
 module.exports = router;
